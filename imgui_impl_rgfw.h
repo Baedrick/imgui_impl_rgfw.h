@@ -348,7 +348,7 @@ void ImGui_ImplRgfw_CursorEnterCallback(const RGFW_event* e)
 
 void ImGui_ImplRgfw_CharCallback(const RGFW_event* e)
 {
-    unsigned int c = (unsigned int)e->keyChar.value;
+    unsigned int c = e->keyChar.value;
 
     ImGuiIO& io = ImGui::GetIO();
     io.AddInputCharacter(c);
