@@ -36,10 +36,10 @@ int main() {
     ImGui_ImplOpenGL2_Init();
 
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
- 
-    RGFW_monitor monitor = RGFW_window_getMonitor(win);
-    io.DisplayFramebufferScale = ImVec2(monitor.scaleX, monitor.scaleY);
- 
+
+    RGFW_monitor *monitor = RGFW_window_getMonitor(win);
+    io.DisplayFramebufferScale = ImVec2(monitor->scaleX, monitor->scaleY);
+
     while (RGFW_window_shouldClose(win) == RGFW_FALSE) {
         RGFW_pollEvents();
         io.DisplaySize = ImVec2(win->w, win->h);
@@ -48,7 +48,7 @@ int main() {
 
         static float f = 0.0f;
         static int counter = 0;
-        
+
         ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
             ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
