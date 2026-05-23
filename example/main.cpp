@@ -5,7 +5,7 @@
 #define RGFW_OPENGL
 
 /*
-    alternative: imgui_impl_rgfw.h includes RGFW internally
+    Alternative: imgui_impl_rgfw.h includes RGFW internally
     if you don't need to include RGFW.h explicity here, you can condense this block into:
     #define RGFW_IMPLEMENTATION
     #define RGFW_IMGUI_IMPLEMENTATION
@@ -46,7 +46,7 @@ int main() {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  /* Enable Gamepad Controls */
 #ifdef RGFW_IMGUI_DOCKING_EXAMPLE
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     /* Enable Docking */
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   /* Enable Multi-Viewport / Platform Windows */
+    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   /* (Unsupported) Enable Multi-Viewport / Platform Windows */
 #endif
 
     /* Setup Dear ImGui style */
@@ -122,12 +122,12 @@ int main() {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 #ifdef RGFW_IMGUI_DOCKING_EXAMPLE
-        /* Update and render additional Platform Windows */
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-            RGFW_window_makeCurrentWindow_OpenGL(window);
-        }
+        /* (Unsupported) Update and render additional Platform Windows */
+        // if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+        //     ImGui::UpdatePlatformWindows();
+        //     ImGui::RenderPlatformWindowsDefault();
+        //     RGFW_window_makeCurrentWindow_OpenGL(window);
+        // }
 #endif
 
         RGFW_window_swapBuffers_OpenGL(window);
