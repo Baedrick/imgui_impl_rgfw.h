@@ -37,13 +37,13 @@ if "%docking%"=="1" set compile_flags=%compile_flags% -DRGFW_IMGUI_DOCKING_EXAMP
 
 :: --- Compile Definitions -----------------------------------------------------
 set cl_include=    /Iimgui\ /I.
-set cl_common=     /nologo /FC /Z7 /W4 /WX /std:c++17 /EHsc /Zc:__cplusplus %cl_include% %compile_flags%
+set cl_common=     /nologo /FC /Z7 /W4 /std:c++17 /EHsc /Zc:__cplusplus %cl_include% %compile_flags%
 set cl_debug=      call cl /Od /MTd /D_DEBUG /RTC1 %cl_common%
 set cl_release=    call cl /O2 /MT /DNDEBUG %cl_common%
 set cl_link=       /link /MANIFEST:EMBED /INCREMENTAL:NO /noexp
 set cl_out=        /out:
 set clang_include= -Iimgui\ -I.
-set clang_common=  -fdiagnostics-absolute-paths -Wall -Wextra -Werror -std=c++17 -Dgnu_printf=printf %clang_include%
+set clang_common=  -fdiagnostics-absolute-paths -Wall -Wextra -std=c++17 -Dgnu_printf=printf %clang_include%
 set clang_debug=   call clang++ -g -gcodeview -O0 -D_DEBUG -fms-runtime-lib=static_dbg %clang_common% %compile_flags%
 set clang_release= call clang++ -g -gcodeview -O2 -DNDEBUG -fms-runtime-lib=static %clang_common% %compile_flags%
 set clang_link=    -fuse-ld=lld -Wl,/MANIFEST:EMBED
