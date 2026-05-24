@@ -22,12 +22,10 @@
 #include "RGFW.h"
 
 #define IM_ASSERT ASSERT_ALWAYS
-#define IMGUI_DEFINE_MATH_OPERATORS /* TODO: remove; required for unity builds */
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #define RGFW_IMGUI_IMPLEMENTATION
 #include "../imgui_impl_rgfw.h"
-#include "imgui_unity.cpp" /* TODO: remove */
 
 #ifdef __APPLE__
     #include <OpenGL/gl.h>

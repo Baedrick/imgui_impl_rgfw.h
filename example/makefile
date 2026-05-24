@@ -84,13 +84,19 @@ ifneq (,$(filter $(CXX),emcc))
 endif
 
 all: $(SRC)
-	$(CXX) $(SRC) $(CXXFLAGS) -Iimgui $(LINK_GL1) $(LIBS) -I. $(WARNINGS) -o rgfw-imgui$(EXT)
+	make imgui.o
+	$(CXX) $(SRC) $(CXXFLAGS) -Iimgui *.o $(LINK_GL1) $(LIBS) -I. $(WARNINGS) -o rgfw-imgui$(EXT)
+
+imgui.o:
+	$(CXX) -c imgui/*.cpp
 
 clean:
 	rm -f *.exe rgfw-imgui *.o
 
 debug: main.cpp
-	$(CXX) $(SRC) $(CXXFLAGS) -I./imgui $(LINK_GL1) $(LIBS) -I. $(WARNINGS) -o rgfw-imgui$(EXT)
+	make imgui.o
+
+	$(CXX) $(SRC) $(CXXFLAGS) -I./imgui *.o $(LINK_GL1) $(LIBS) -I. $(WARNINGS) -o rgfw-imgui$(EXT)
 ifeq (,$(filter $(CXX),emcc))
 	.$(OS_DIR)rgfw-imgui$(EXT)
 endif
