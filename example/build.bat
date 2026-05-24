@@ -53,18 +53,31 @@ if "%msvc%"=="1"    set compile_debug=%cl_debug%
 if "%msvc%"=="1"    set compile_release=%cl_release%
 if "%msvc%"=="1"    set compile_link=%cl_link%
 if "%msvc%"=="1"    set out=%cl_out%
+if "%msvc%"=="1"    set only_compile=/c
+if "%msvc%"=="1"    set obj_out=%cl_obj_out%
+if "%msvc%"=="1"    set obj_ext=.obj
 if "%clang%"=="1"   set compile_debug=%clang_debug%
 if "%clang%"=="1"   set compile_release=%clang_release%
 if "%clang%"=="1"   set compile_link=%clang_link%
 if "%clang%"=="1"   set out=%clang_out%
+if "%clang%"=="1"   set only_compile=-c
+if "%clang%"=="1"   set obj_out=%clang_obj_out%
+if "%clang%"=="1"   set obj_ext=.o
 if "%debug%"=="1"   set compile=%compile_debug%
 if "%release%"=="1" set compile=%compile_release%
 
 :: --- Build -------------------------------------------------------------------
-%compile%main.cpp %compile_link% %out%rgfw-imgui.exe || exit /b 1
+if not exist imgui_lib%obj_ext% (
+    echo [building imgui]
+    %compile% %only_compile% imgui\*.cpp || exit /b 1
+    lib /nologo /out:imgui_lib%obj_ext% *%obj_ext% || exit /b 1
+    for %%f in (*%obj_ext%) do if not "%%f"=="imgui_lib%obj_ext%" del "%%f"
+)
+
+%compile% main.cpp imgui_lib%obj_ext% %compile_link% %out%rgfw-imgui.exe || exit /b 1
 
 :: MSVC does not clean up one line compile artifacts unlike Clang.
-if "%msvc%"=="1" del *.obj >nul
+if "%msvc%"=="1" del main%obj_ext% >nul
 
 :: --- Run On Debug ------------------------------------------------------------
 if "%debug%"=="1" if exist rgfw-imgui.exe (
