@@ -90,7 +90,7 @@ clean:
 	rm -f *.exe rgfw-imgui *.o
 
 debug: main.cpp
-	$(CXX) $(SRC) $(CXXFLAGS) -I./imgui $(LINK_GL1) $(LIBS) -I. $(WARNINGS) -D RGFW_DEBUG -o rgfw-imgui$(EXT)
+	$(CXX) $(SRC) $(CXXFLAGS) -I./imgui $(LINK_GL1) $(LIBS) -I. $(WARNINGS) -o rgfw-imgui$(EXT)
 ifeq (,$(filter $(CXX),emcc))
 	.$(OS_DIR)rgfw-imgui$(EXT)
 endif

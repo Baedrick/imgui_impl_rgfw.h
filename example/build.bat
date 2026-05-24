@@ -32,7 +32,6 @@ if "%msvc%"=="1"    set clang=0 && echo [msvc compile]
 if "%clang%"=="1"   set msvc=0 && echo [clang compile]
 
 set compile_flags=
-if "%debug%"=="1"   set compile_flags=%compile_flags% -DRGFW_DEBUG && echo [rgfw debug enabled]
 if "%docking%"=="1" set compile_flags=%compile_flags% -DRGFW_IMGUI_DOCKING_EXAMPLE && echo [docking enabled]
 
 :: --- Compile Definitions -----------------------------------------------------
