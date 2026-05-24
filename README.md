@@ -1,26 +1,33 @@
 # imgui_impl_rgfw.h 
 RGFW platform backend for Dear ImGUI
 
-# example
+# Example
 ![alt text](image.png)
 
-The example uses RGFW with ImGui and OpenGL3 
-
-To compile the example, `cd` into the example directory
+The example uses RGFW with ImGui and OpenGL3.
+To compile the example, `cd` into the example directory:
 ```
 cd example
 ```
 
-On Linux, macOS, and Windows (MinGW/MSYS2), build with `make` 
-
+### Build on Linux, macOS, and Windows (MinGW/MSYS2)
+Build with `make` .
 ```sh
 make
 ```
+To build with docking
+```sh
+make docking=1
+```
 
-On Windows (MSVC/Clang), build with `build.bat`
-
+### Build on Windows (MSVC/Clang)
+Ensure you have [Visual Studio](https://visualstudio.microsoft.com/vs/) installed, then run `build.bat`.
 ```cmd
-build.bat
+build
+```
+To build with docking
+```cmd
+build docking
 ```
 
 This compiles RGFW, ImGUI and then main.cpp
