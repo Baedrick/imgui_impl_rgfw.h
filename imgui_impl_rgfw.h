@@ -46,9 +46,6 @@ IMGUI_IMPL_API void     ImGui_ImplRgfw_RestoreCallbacks(RGFW_window* window);
 */
 IMGUI_IMPL_API void     ImGui_ImplRgfw_SetCallbacksChainForAllWindows(bool chain_for_all_windows);
 
-typedef struct {int x; int y;} impoint;
-#define RGFW_point impoint
-
 /* RGFW callbacks (to call yourself if you didn't install callbacks) */
 IMGUI_IMPL_API void     ImGui_ImplRgfw_UberCallback(const RGFW_event* e);
 
@@ -62,7 +59,11 @@ IMGUI_IMPL_API float    ImGui_ImplRgfw_GetContentScaleForMonitor(RGFW_monitor *m
 #ifdef RGFW_IMGUI_IMPLEMENTATION
 #ifndef IMGUI_DISABLE
 
-#include "RGFW.h"
+#ifndef RGFW_HEADER
+    #include "RGFW.h"
+#endif
+
+/* TODO: include platform headers if RGFW_NATIVE is not defined */
 
 enum RgfwClientApi {
     RgfwClientApi_Unknown,
@@ -89,23 +90,16 @@ static ImGui_ImplRgfw_Data* ImGui_ImplRgfw_GetBackendData() {
     return ImGui::GetCurrentContext() ? (ImGui_ImplRgfw_Data*)ImGui::GetIO().BackendPlatformUserData : nullptr;
 }
 
-/* Forward Declarations */
-static u64 ImGui_ImplRgfw_GetTimerFreq();
-static u64 ImGui_ImplRgfw_GetTimerValue();
-static double ImGui_ImplRgfw_GetTime();
-
-char* clipboard_str = nullptr;
-
 /* Functions */
 static const char* ImGui_ImplRgfw_GetClipboardText(ImGuiContext* ctx) {
-    RGFW_UNUSED(ctx);
+    IM_UNUSED(ctx);
     size_t size;
     return RGFW_readClipboard(&size);
 }
 
 static void ImGui_ImplRgfw_SetClipboardText(ImGuiContext* ctx, const char* text) {
-    RGFW_UNUSED(ctx);
-    RGFW_UNUSED(text);
+    IM_UNUSED(ctx);
+    IM_UNUSED(text);
     RGFW_writeClipboard(text, static_cast<u32>(strlen(text)));
 }
 
@@ -283,12 +277,12 @@ void ImGui_ImplRgfw_UberCallback(const RGFW_event* e) {
         case RGFW_mouseButtonPressed:
         case RGFW_mouseButtonReleased: {
             RGFW_mouseButton button = e->button.value;
-            ImGuiMouseButton mouse_button = ImGuiMouseButton_COUNT;
-            if (button == RGFW_mouseLeft) { mouse_button = ImGuiMouseButton_Left; }
-            else if (button == RGFW_mouseRight) { mouse_button = ImGuiMouseButton_Right; }
-            else if (button == RGFW_mouseMiddle) { mouse_button = ImGuiMouseButton_Middle; }
-            if (mouse_button < ImGuiMouseButton_COUNT) {
-                io.AddMouseButtonEvent(button, e->type == RGFW_mouseButtonPressed);
+            ImGuiMouseButton imguiButton = ImGuiMouseButton_COUNT;
+            if (button == RGFW_mouseLeft) { imguiButton = ImGuiMouseButton_Left; }
+            else if (button == RGFW_mouseRight) { imguiButton = ImGuiMouseButton_Right; }
+            else if (button == RGFW_mouseMiddle) { imguiButton = ImGuiMouseButton_Middle; }
+            if (imguiButton < ImGuiMouseButton_COUNT) {
+                io.AddMouseButtonEvent(imguiButton, e->type == RGFW_mouseButtonPressed);
             }
             break;
         }
@@ -305,8 +299,8 @@ void ImGui_ImplRgfw_UberCallback(const RGFW_event* e) {
             io.AddKeyEvent(ImGuiMod_Shift, (modState & RGFW_modShift) != 0);
             io.AddKeyEvent(ImGuiMod_Alt,  (modState & RGFW_modAlt) != 0);
             io.AddKeyEvent(ImGuiMod_Super, (modState & RGFW_modSuper) != 0);
-            ImGuiKey imgui_key = ImGui_ImplRgfw_KeyToImGuiKey(e->key.value);
-            io.AddKeyEvent(imgui_key, e->type == RGFW_keyPressed);
+            ImGuiKey imguiKey = ImGui_ImplRgfw_KeyToImGuiKey(e->key.value);
+            io.AddKeyEvent(imguiKey, e->type == RGFW_keyPressed);
             break;
         }
         case RGFW_keyChar: {
@@ -375,19 +369,21 @@ static bool ImGui_ImplRgfw_Init(RGFW_window* window, bool install_callbacks, Rgf
     platform_io.Platform_GetClipboardTextFn = ImGui_ImplRgfw_GetClipboardText;
     platform_io.Platform_ClipboardUserData = bd->Window;
 #ifdef __EMSCRIPTEN__
-      // io.PlatformOpenInShellFn = [](ImGuiContext*, const char* url) { ImGui_ImplRgfw_EmscriptenOpenURL(url); return true; };
+    platform_io.PlatformOpenInShellFn = [](ImGuiContext*, const char* url) { ImGui_ImplRgfw_EmscriptenOpenURL(url); return true; };
 #endif
+
     /* Chain RGFW callbacks: our callbacks will call the user's previously installed callbacks, if any. */
-    if (install_callbacks)
+    if (install_callbacks) {
         ImGui_ImplRgfw_InstallCallbacks(window);
+    }
 
     /* Set platform dependent data in viewport */
-    ImGuiViewport* main_viewport = ImGui::GetMainViewport();
-    main_viewport->PlatformHandle = static_cast<void*>(bd->Window);
+    ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+    mainViewport->PlatformHandle = static_cast<void*>(bd->Window);
 #if defined(_WIN32) || defined(__APPLE__)
-    main_viewport->PlatformHandleRaw = bd->Window->src.window;
+    mainViewport->PlatformHandleRaw = bd->Window->src.window;
 #else
-    IM_UNUSED(main_viewport);
+    IM_UNUSED(mainViewport);
 #endif
 
     bd->ClientApi = client_api;
@@ -410,6 +406,7 @@ void ImGui_ImplRgfw_Shutdown() {
     ImGui_ImplRgfw_Data* bd = ImGui_ImplRgfw_GetBackendData();
     IM_ASSERT(bd != nullptr && "No platform backend to shutdown, or already shutdown?");
     ImGuiIO& io = ImGui::GetIO();
+    ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
 
     if (bd->InstalledCallbacks) {
         ImGui_ImplRgfw_RestoreCallbacks(bd->Window);
@@ -418,6 +415,7 @@ void ImGui_ImplRgfw_Shutdown() {
     io.BackendPlatformName = nullptr;
     io.BackendPlatformUserData = nullptr;
     io.BackendFlags &= ~(ImGuiBackendFlags_HasMouseCursors | ImGuiBackendFlags_HasSetMousePos);
+    platform_io.ClearPlatformHandlers();
     IM_DELETE(bd);
 }
 
@@ -487,42 +485,39 @@ static void ImGui_ImplRgfw_UpdateMouseCursor()
     }
 }
 
-void ImGui_ImplRgfw_NewFrame() {
-    ImGuiIO& io = ImGui::GetIO();
-    ImGui_ImplRgfw_Data* bd = ImGui_ImplRgfw_GetBackendData();
-    IM_ASSERT(bd != nullptr && "Context or backend not initialized! Did you call ImGui_ImplRgfw_InitForXXX()?");
+static void ImGui_ImplRgfw_GetWindowSizeAndFramebufferScale(RGFW_window* window, ImVec2* out_size, ImVec2* out_framebuffer_scale) {
+    i32 winW, winH;
+    RGFW_window_getSize(window, &winW, &winH);
 
-    /* Setup display size (every frame to accommodate for window resizing) */
-    io.DisplaySize = ImVec2(static_cast<float>(bd->Window->w), static_cast<float>(bd->Window->h));
+    i32 displayW, displayH;
+    RGFW_window_getSizeInPixels(window, &displayW, &displayH);
+    float xScale = winW > 0 ? static_cast<float>(displayW) / static_cast<float>(winW) : 1.0f;
+    float yScale = winH > 0 ? static_cast<float>(displayH) / static_cast<float>(winH) : 1.0f;
 
-    /* Setup time step */
-    double current_time = ImGui_ImplRgfw_GetTime();
-    if(current_time <= bd->Time) {
-        current_time = bd->Time + 0.000001;
+    if (out_size != nullptr) {
+        *out_size = ImVec2(static_cast<float>(winW), static_cast<float>(winH));
     }
-    io.DeltaTime = bd->Time > 0.0 ? static_cast<float>(current_time - bd->Time) : 1.0f / 60.0f;
-    bd->Time = current_time;
-
-    ImGui_ImplRgfw_UpdateMouseData();
-    ImGui_ImplRgfw_UpdateMouseCursor();
+    if (out_framebuffer_scale != nullptr) {
+        *out_framebuffer_scale = ImVec2(xScale, yScale);
+    }
 }
 
 static u64 ImGui_ImplRgfw_GetTimerFreq() {
     u64 freq;
 #ifdef RGFW_WINDOWS
-    static u64 cached_freq = 0;
-    if (cached_freq == 0) {
-        QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(&cached_freq));
+    static u64 cachedFreq = 0;
+    if (cachedFreq == 0) {
+        QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER*>(&cachedFreq));
     }
-    freq = cached_freq;
+    freq = cachedFreq;
 #elif defined(RGFW_MACOS)
-    static u64 cached_freq = 0;
-    if (cached_freq == 0) {
+    static u64 cachedFreq = 0;
+    if (cachedFreq == 0) {
         mach_timebase_info_data_t info;
         mach_timebase_info(&info);
-        cached_freq = static_cast<u64>((info.denom * 1e9) / info.numer);
+        cachedFreq = static_cast<u64>((info.denom * 1e9) / info.numer);
     }
-    freq = cached_freq;
+    freq = cachedFreq;
 #elif defined(RGFW_WASM)
     freq = 1000llu;
 #else
@@ -540,20 +535,20 @@ static u64 ImGui_ImplRgfw_GetTimerValue() {
 #elif defined(RGFW_MACOS)
         value = static_cast<u64>(mach_absolute_time());
 #else
-        static i32 selected_clock = -1;
+        static i32 selectedClock = -1;
         struct timespec ts;
-        if (selected_clock == -1) {
+        if (selectedClock == -1) {
 #if defined(_POSIX_MONOTONIC_CLOCK)
             if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-                selected_clock = CLOCK_MONOTONIC;
+                selectedClock = CLOCK_MONOTONIC;
             } else {
-                selected_clock = CLOCK_REALTIME;
+                selectedClock = CLOCK_REALTIME;
             }
 #else
-            selected_clock = CLOCK_REALTIME;
+            selectedClock = CLOCK_REALTIME;
 #endif
         }
-        clock_gettime(selected_clock, &ts);
+        clock_gettime(selectedClock, &ts);
         value = static_cast<u64>(ts.tv_sec) * ImGui_ImplRgfw_GetTimerFreq() + static_cast<u64>(ts.tv_nsec);
 #endif
     return value;
@@ -563,29 +558,49 @@ static double ImGui_ImplRgfw_GetTime() {
     return static_cast<double>(ImGui_ImplRgfw_GetTimerValue()) / static_cast<double>(ImGui_ImplRgfw_GetTimerFreq());
 }
 
+void ImGui_ImplRgfw_NewFrame() {
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui_ImplRgfw_Data* bd = ImGui_ImplRgfw_GetBackendData();
+    IM_ASSERT(bd != nullptr && "Context or backend not initialized! Did you call ImGui_ImplRgfw_InitForXXX()?");
+
+    /* Setup display size (every frame to accommodate for window resizing) */
+    ImGui_ImplRgfw_GetWindowSizeAndFramebufferScale(bd->Window, &io.DisplaySize, &io.DisplayFramebufferScale);
+
+    /* Setup time step */
+    double currentTime = ImGui_ImplRgfw_GetTime();
+    if(currentTime <= bd->Time) {
+        currentTime = bd->Time + 0.000001;
+    }
+    io.DeltaTime = bd->Time > 0.0 ? static_cast<float>(currentTime - bd->Time) : 1.0f / 60.0f;
+    bd->Time = currentTime;
+
+    ImGui_ImplRgfw_UpdateMouseData();
+    ImGui_ImplRgfw_UpdateMouseCursor();
+}
+
 float ImGui_ImplRgfw_GetContentScaleForWindow(RGFW_window* window) {
-    float content_scale = 1.0f;
+    float contentScale = 1.0f;
 #if defined(RGFW_WINDOWS) || defined(RGFW_UNIX)
     RGFW_monitor* mon = RGFW_window_getMonitor(window);
-    float context_scale_x, context_scale_y;
-    RGFW_monitor_getScale(mon, &context_scale_x, &context_scale_y);
-    content_scale = context_scale_x < context_scale_y ? context_scale_y : context_scale_x;
+    float xScale, yScale;
+    RGFW_monitor_getScale(mon, &xScale, &yScale);
+    contentScale = xScale < yScale ? yScale : xScale;
 #else
     IM_UNUSED(window);
 #endif
-    return content_scale;
+    return contentScale;
 }
 
 float ImGui_ImplRgfw_GetContentScaleForMonitor(RGFW_monitor* monitor) {
-    float content_scale = 1.0f;
+    float contentScale = 1.0f;
 #if defined(RGFW_WINDOWS) || defined(RGFW_UNIX)
-    float context_scale_x, context_scale_y;
-    RGFW_monitor_getScale(monitor, &context_scale_x, &context_scale_y);
-    content_scale = context_scale_x < context_scale_y ? context_scale_y : context_scale_x;
+    float xScale, yScale;
+    RGFW_monitor_getScale(monitor, &xScale, &yScale);
+    contentScale = xScale < yScale ? yScale : xScale;
 #else
     IM_UNUSED(monitor);
 #endif
-    return content_scale;
+    return contentScale;
 }
 
 /* -------------------------------------------------------------------------- */
