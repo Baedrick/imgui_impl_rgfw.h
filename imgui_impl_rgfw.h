@@ -63,7 +63,25 @@ IMGUI_IMPL_API float    ImGui_ImplRgfw_GetContentScaleForMonitor(RGFW_monitor *m
     #include "RGFW.h"
 #endif
 
-/* TODO: include platform headers if RGFW_NATIVE is not defined */
+#ifndef RGFW_NATIVE
+    #ifdef RGFW_WINDOWS
+        #ifndef NOMINMAX
+            #define NOMINMAX
+        #endif
+        #ifndef WIN32_LEAN_AND_MEAN
+            #define WIN32_LEAN_AND_MEAN
+        #endif
+        #include <windows.h>
+    #elif defined(RGFW_WASM)
+        #include <emscripten.h>
+        #include <emscripten/html5.h>
+    #else
+        #include <time.h>
+    #endif
+    #ifdef RGFW_MACOS
+        #include <mach/mach_time.h>
+    #endif
+#endif
 
 enum RgfwClientApi {
     RgfwClientApi_Unknown,
